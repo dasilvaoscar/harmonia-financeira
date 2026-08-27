@@ -78,9 +78,9 @@ config:
 ---
 flowchart LR
     n1["Lambda - Payments Service - Publiser"] --> n3["Payment Topic - Kafka"]
-    n3 -- 1 --> n5["Lambda - Antifraud Service - Consumer"]
-    n3 -- 2 --> n7["Lambda - Transaction Service - Consumer"]
-    n3 -- 3 --> n16["Lambda - Notification Service - Consumer"]
+    n3 -- 1 --> n5["Antifraud Service - Consumer"]
+    n3 -- 2 --> n7["Transaction Service - Consumer"]
+    n3 -- 3 --> n16["Notification Service - Consumer"]
     n14["Client WEB"] --> n1
     n5 --> n18["Postgres - Antifraud DB"]
     n5 -- status_update --> n25["Antifraud Topic - Kafka"]
