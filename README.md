@@ -77,44 +77,33 @@ config:
   look: neo
 ---
 flowchart LR
-    n1["Lambda - Payments Service - Publiser"] --> n3["Payment Topic"]
-    n3 -- 1 --> n4["SQS - Antifraud Queue"]
-    n3 -- 2 --> n6["SQS - Transaction Queue"]
-    n3 -- 3 --> n15["SQS - Notification Queue"]
-    n4 --> n5["Lambda - Antifraud Service - Consumer"]
-    n6 --> n7["Lambda - Transaction Service - Consumer"]
+    n1["Lambda - Payments Service - Publiser"] --> n3["Payment Topic - Kafka"]
+    n3 -- 1 --> n5["Lambda - Antifraud Service - Consumer"]
+    n3 -- 2 --> n7["Lambda - Transaction Service - Consumer"]
+    n3 -- 3 --> n16["Lambda - Notification Service - Consumer"]
     n14["Client WEB"] --> n1
-    n15 --> n16["Lambda - Notification Service"]
-    n5 --> n18["Postgres - Antifraud DB"] & n22["External - Dock"]
-    n5 -- status_update --> n3
-    n7 --> n19["Postgres - Transaction DB"] & n22
-    n7 -- status_update --> n3
+    n5 --> n18["Postgres - Antifraud DB"]
+    n5 -- status_update --> n25["Antifraud Topic - Kafka"]
+    n7 --> n19["Postgres - Transaction DB"] & n26["Transaction Topic - Kafka"]
     n16 --> n20["Postgres - Notification DB"] & n23["External - (SMS) Twilio or AWS SNS"] & n24["External - (E-MAIL) AWS SES or SEND GRID"]
-    n16 -- status_update --> n3
     n21["Client Mobile"] --> n1
 
     n1@{ shape: rect}
     n3@{ shape: hex}
-    n4@{ shape: h-cyl}
-    n6@{ shape: h-cyl}
-    n15@{ shape: h-cyl}
     n5@{ shape: rect}
     n7@{ shape: rect}
-    n14@{ shape: rect}
     n16@{ shape: rect}
+    n14@{ shape: rect}
     n18@{ shape: cyl}
-    n22@{ shape: rounded}
+    n25@{ shape: hex}
     n19@{ shape: cyl}
+    n26@{ shape: hex}
     n20@{ shape: cyl}
     n23@{ shape: rounded}
     n24@{ shape: rounded}
     n21@{ shape: rect}
-     n4:::Peach
-     n6:::Peach
-     n15:::Peach
      n14:::Rose
      n18:::Sky
-     n22:::Ash
      n19:::Sky
      n20:::Sky
      n23:::Ash
