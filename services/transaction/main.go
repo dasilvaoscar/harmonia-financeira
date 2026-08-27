@@ -1,25 +1,53 @@
 package main
 
 import (
-    "fmt"
-    "net/http"
-    "os"
-    "strings"
+	"concurrency-simulator/services/account/utils"
+	"concurrency-simulator/services/shared"
+
+	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"go.uber.org/zap"
 )
 
 func main() {
-    serverPort := os.Getenv("HTTP_SERVER_PORT");
-    serviceName := os.Getenv("SERVICE_NAME");
+	logger := utils.NewRequestLogger()
+	consumer := createConsumer(logger)
 
-    fmt.Printf("[%s]: is running on port %s\n", strings.ToUpper(serviceName), serverPort)
+    assingPartitions(consumer, logger)
 
-    http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-        w.Write([]byte("This is the "+ serviceName +" service"));
-    });
+	for {
+        msg, err := consumer.ReadMessage(-1)
 
-    err := http.ListenAndServe(":"+serverPort, nil);
+		if err != nil {
+			logger.Error("Consumer error", zap.Error(err))
+			continue
+		}
 
-    if err != nil {
-        fmt.Printf("Error starting server: %v\n", err);
-    }
+        logger.Info("Mensagem lida", zap.String("Value", string(msg.Value)))
+	}
+}
+
+func createConsumer(logger *zap.Logger) *kafka.Consumer {
+	consumer, err := kafka.NewConsumer(utils.GetKafkaConfig())
+
+	if err != nil {
+		logger.Error("Consumer creation error", zap.Error(err))
+		panic(err)
+	}
+
+	return consumer
+}
+
+func assingPartitions(consumer *kafka.Consumer, logger *zap.Logger) {
+	topic := shared.PaymentTopic
+	err := consumer.Assign([]kafka.TopicPartition{
+		{
+			Topic:     &topic,
+			Partition: shared.PartitionAlias["starting"],
+		},
+	})
+
+	if err != nil {
+		logger.Error("Failed to assign partitions", zap.Error(err))
+		panic(err)
+	}
 }

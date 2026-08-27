@@ -60,6 +60,24 @@ services:
       - kafka1
       - account_db
 
+  transaction:
+    container_name: transaction-svc
+    restart: always
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - REPOSITORY_NAME=./services/transaction
+    environment:
+      SERVICE_NAME: "transaction-svc"    
+      KAFKA_BROKER: "kafka1:19092"
+      KAFKA_GROUP_ID: "transaction-svc-group-1"
+    networks:
+      - concurrency-simulator-network
+    depends_on:
+      - kafka1
+
   # Infra
   antifraud_db:
     image: postgres:15-alpine

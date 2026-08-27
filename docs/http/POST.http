@@ -3,7 +3,7 @@ Content-Type: application/json
 
 {
   "first_name": "Oscar",
-  "last_name": "da Silva",
+  "last_name": "da Silva 2",
   "email": "test@test.com",
   "installments": 10,
   "amount": 50.0
