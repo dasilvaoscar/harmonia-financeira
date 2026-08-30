@@ -3,7 +3,7 @@ CREATE TYPE outbox_status as ENUM ('PENDING', 'CONSUMED');
 CREATE TABLE IF NOT EXISTS outbox (
     id UUID PRIMARY KEY,
     domain_id UUID,
-    paylaod JSONB NOT NULL,
+    payload JSONB NOT NULL,
     entity VARCHAR(40) NOT NULL,
     status outbox_status NOT NULL DEFAULT 'PENDING',
     created_at TIMESTAMP DEFAULT NOW(),

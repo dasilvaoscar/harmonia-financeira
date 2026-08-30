@@ -3,7 +3,10 @@ package services
 import (
 	"concurrency-simulator/services/shared/topic_messages"
 	"database/sql"
+	"encoding/json"
+	"time"
 
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -18,7 +21,6 @@ func (ac *AccountService) Execute(payment topic_messages.Payment) bool {
 		ac.log.Error("failed to ping database", zap.Error(err))
 		return false
 	}
-	defer tx.Rollback()
 
 	is_account_created := ac.accountExists(tx, payment.Email)
 
@@ -28,7 +30,7 @@ func (ac *AccountService) Execute(payment topic_messages.Payment) bool {
 	}
 
 	ac.log.Info("Account not found, creating account", zap.String("email", payment.Email))
-	is_account_created = ac.createAccount(tx, payment)
+	is_account_created, err = ac.createAccount(tx, payment)
 
 	if err := tx.Commit(); err != nil {
 		ac.log.Error("failed to commit transaction", zap.Error(err))
@@ -57,18 +59,57 @@ func (ac *AccountService) accountExists(tx *sql.Tx, email string) bool {
 	return exists
 }
 
-func (ac *AccountService) createAccount(tx *sql.Tx, data topic_messages.Payment) bool {
-	query := `
+func (ac *AccountService) createAccount(tx *sql.Tx, data topic_messages.Payment) (bool, error) {
+	account_creation_query := `
 		INSERT INTO account (first_name, last_name, email, created_at) 
 		VALUES ($1, $2, $3, NOW())
+		RETURNING id, created_at
 	`
 
-	_, err := tx.Exec(query, data.FirstName, data.LastName, data.Email)
+	var account_id string
+	var created_at time.Time
+	account_creation_error := tx.QueryRow(
+		account_creation_query,
+		data.FirstName, data.LastName, data.Email,
+	).Scan(&account_id, &created_at)
 
-	if err != nil {
-		ac.log.Error("failed to create account", zap.Error(err), zap.String("email", data.Email))
-		return false
+	if account_creation_error != nil {
+		ac.log.Error("failed to create account", zap.Error(account_creation_error), zap.String("email", data.Email))
+		tx.Rollback()
+		return false, account_creation_error
 	}
 
-	return true
+	account_outbox_event_query := `
+		INSERT INTO outbox (id, domain_id, payload, entity, status)
+		VALUES ($1, $2, $3, $4, $5)
+	`
+
+	event_id, _ := uuid.NewV7()
+	type EventData struct {
+		Status    string    `json:"status"`
+		FistName  string    `json:"first_name"`
+		LastName  string    `json:"last_name"`
+		Email     string    `json:"email"`
+		CreatedAt time.Time `json:"created_at"`
+	}
+
+	meta := EventData{
+		Status:    "CREATED",
+		FistName:  data.FirstName,
+		LastName:  data.LastName,
+		Email:     data.Email,
+		CreatedAt: created_at,
+	}
+
+	event_data, _ := json.Marshal(meta)
+
+	_, outbox_event_error := tx.Exec(account_outbox_event_query, event_id, account_id, event_data, "ACCOUNT", "PENDING")
+
+	if outbox_event_error != nil {
+		ac.log.Error("failed to create account event", zap.Error(outbox_event_error), zap.String("email", data.Email))
+		tx.Rollback()
+		return false, outbox_event_error
+	}
+
+	return true, nil
 }
