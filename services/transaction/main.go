@@ -12,17 +12,17 @@ func main() {
 	logger := utils.NewRequestLogger()
 	consumer := createConsumer(logger)
 
-    assingPartitions(consumer, logger)
+	assingPartitions(consumer, logger)
 
 	for {
-        msg, err := consumer.ReadMessage(-1)
+		msg, err := consumer.ReadMessage(-1)
 
 		if err != nil {
 			logger.Error("Consumer error", zap.Error(err))
 			continue
 		}
 
-        logger.Info("Mensagem lida", zap.String("Value", string(msg.Value)))
+		logger.Info("Mensagem lida", zap.String("Value", string(msg.Value)))
 	}
 }
 
