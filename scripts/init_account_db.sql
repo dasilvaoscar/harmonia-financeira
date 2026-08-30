@@ -9,5 +9,5 @@ CREATE TABLE IF NOT EXISTS account (
 );
 
 -- Índices para melhor performance
-CREATE INDEX IF NOT EXISTS idx_analysis_email ON analysis(email);
-CREATE INDEX IF NOT EXISTS idx_analysis_created_at ON analysis(created_at);
+CREATE INDEX IF NOT EXISTS idx_account_email ON account(email);
+CREATE INDEX IF NOT EXISTS idx_account_created_at ON account(created_at);
