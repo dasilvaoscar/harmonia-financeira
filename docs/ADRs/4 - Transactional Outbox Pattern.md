@@ -1,6 +1,6 @@
 # 4 - Transactional Outbox Pattern
 
-**Título da Decisão: Testes de estresse**
+**Título da Decisão: Transactional Outbox Pattern**
 
 ## 1. Contexto
 Como medida de resiliência entre a publicação de eventos, essa ADR propõe a utilização do padrão
