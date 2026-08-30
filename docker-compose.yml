@@ -94,6 +94,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data_antifraud
       - ./scripts/init_antifraud_db.sql:/docker-entrypoint-initdb.d/init_antifraud_db.sql
+      - ./scripts/init_outbox_table.sql:/docker-entrypoint-initdb.d/init_outbox_table.sql
     networks:
       - concurrency-simulator-network
     healthcheck:
@@ -117,6 +118,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data_account
       - ./scripts/init_account_db.sql:/docker-entrypoint-initdb.d/init_account_db.sql
+      - ./scripts/init_outbox_table.sql:/docker-entrypoint-initdb.d/init_outbox_table.sql
     networks:
       - concurrency-simulator-network
     healthcheck:
