@@ -1,7 +1,7 @@
 package services
 
 import (
-	"concurrency-simulator/services/shared/topic_messages"
+	"concurrency-simulator/services/account/contracts"
 	"database/sql"
 	"encoding/json"
 	"time"
@@ -15,22 +15,22 @@ type AccountService struct {
 	driver *sql.DB
 }
 
-func (ac *AccountService) Execute(payment topic_messages.Payment) bool {
+func (ac *AccountService) Execute(account contracts.AccountContract) bool {
 	tx, err := ac.driver.Begin()
 	if err != nil {
 		ac.log.Error("failed to ping database", zap.Error(err))
 		return false
 	}
 
-	is_account_created := ac.accountExists(tx, payment.Email)
+	is_account_created := ac.accountExists(tx, account.Email)
 
 	if is_account_created {
-		ac.log.Info("Account already exists", zap.String("email", payment.Email))
+		ac.log.Info("Account already exists", zap.String("email", account.Email))
 		return is_account_created
 	}
 
-	ac.log.Info("Account not found, creating account", zap.String("email", payment.Email))
-	is_account_created, err = ac.createAccount(tx, payment)
+	ac.log.Info("Account not found, creating account", zap.String("email", account.Email))
+	is_account_created, err = ac.createAccount(tx, account)
 
 	if err := tx.Commit(); err != nil {
 		ac.log.Error("failed to commit transaction", zap.Error(err))
@@ -59,7 +59,7 @@ func (ac *AccountService) accountExists(tx *sql.Tx, email string) bool {
 	return exists
 }
 
-func (ac *AccountService) createAccount(tx *sql.Tx, data topic_messages.Payment) (bool, error) {
+func (ac *AccountService) createAccount(tx *sql.Tx, data contracts.AccountContract) (bool, error) {
 	account_creation_query := `
 		INSERT INTO account (first_name, last_name, email, created_at) 
 		VALUES ($1, $2, $3, NOW())

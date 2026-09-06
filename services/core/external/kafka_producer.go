@@ -1,4 +1,4 @@
-package kafka_producer
+package external
 
 import (
 	"errors"

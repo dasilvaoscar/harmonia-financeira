@@ -1,23 +1,22 @@
-package handlers
+package controllers
 
 import (
 	"concurrency-simulator/services/core/utils"
 	"concurrency-simulator/services/shared"
 	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"go.uber.org/zap"
 )
 
-func PaymentHandler(w http.ResponseWriter, r *http.Request, kafkaProducer *kafka.Producer) {
+func PaymentsController(w http.ResponseWriter, r *http.Request, kafkaProducer *kafka.Producer) {
 	logger := utils.NewRequestLogger(r)
 
 	topic := shared.PaymentTopic
 
-	bodyMap, err := parseBody(r)
+	bodyMap, err := shared.ParseBody(r)
 
 	if err != nil {
 		logger.Error("Failed to parse request body",
@@ -29,7 +28,7 @@ func PaymentHandler(w http.ResponseWriter, r *http.Request, kafkaProducer *kafka
 		return
 	}
 
-	if err := validateBody(bodyMap); err != nil {
+	if err := validatePaymentBody(bodyMap); err != nil {
 		logger.Warn("Invalid request body",
 			zap.Error(err),
 		)
@@ -37,11 +36,9 @@ func PaymentHandler(w http.ResponseWriter, r *http.Request, kafkaProducer *kafka
 		return
 	}
 
+	accountId := bodyMap["account_id"]
 	amount := bodyMap["amount"]
 	installments := bodyMap["installments"]
-	email := bodyMap["email"]
-	firstName := bodyMap["first_name"]
-	lastName := bodyMap["last_name"]
 
 	amountFloat, ok := amount.(float64)
 	if !ok {
@@ -51,11 +48,9 @@ func PaymentHandler(w http.ResponseWriter, r *http.Request, kafkaProducer *kafka
 	}
 
 	originalMessage := map[string]interface{}{
+		"account_id":   accountId,
 		"amount":       amountFloat,
 		"installments": installments,
-		"email":        email,
-		"first_name":   firstName,
-		"last_name":    lastName,
 	}
 
 	jsonMessage, err := json.Marshal(originalMessage)
@@ -113,27 +108,9 @@ func PaymentHandler(w http.ResponseWriter, r *http.Request, kafkaProducer *kafka
 	w.Write([]byte("sent to kafka"))
 }
 
-func parseBody(r *http.Request) (map[string]interface{}, error) {
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	defer r.Body.Close()
-
-	var bodyMap map[string]interface{}
-
-	err = json.Unmarshal(body, &bodyMap)
-	if err != nil {
-		return nil, err
-	}
-
-	return bodyMap, nil
-}
-
-func validateBody(bodyMap map[string]interface{}) error {
-	if bodyMap["amount"] == nil || bodyMap["installments"] == nil || bodyMap["email"] == nil || bodyMap["first_name"] == nil || bodyMap["last_name"] == nil {
-		return errors.New("amount, installments, email, first_name and last_name are required")
+func validatePaymentBody(bodyMap map[string]interface{}) error {
+	if bodyMap["amount"] == nil || bodyMap["installments"] == nil || bodyMap["account_id"] == nil {
+		return errors.New("amount, installments, account_id are required")
 	}
 
 	return nil
