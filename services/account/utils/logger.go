@@ -7,10 +7,10 @@ import (
 )
 
 func NewRequestLogger() *zap.Logger {
-	var loggerInstance = shared.NewLogger("core-svc")
+	var loggerInstance = shared.NewLogger("account-svc")
 
 	logger := loggerInstance.With(
-		zap.String("topic", shared.PaymentTopic),
+		zap.String("topic", shared.AccountTopic),
 	)
 
 	return logger

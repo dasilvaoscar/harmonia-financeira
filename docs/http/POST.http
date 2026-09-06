@@ -1,10 +1,19 @@
-POST http://localhost:8082/payment
+POST http://localhost:8082/accounts
 Content-Type: application/json
 
 {
   "first_name": "Oscar",
-  "last_name": "da Silva 2",
-  "email": "test2@test.com",
+  "last_name": "da Silva",
+  "email": "oscar.silva@test.com"
+}
+
+###
+
+POST http://localhost:8082/payments
+Content-Type: application/json
+
+{
+  "account_id": "",
   "installments": 10,
   "amount": 505.0
 }

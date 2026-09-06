@@ -1,8 +1,8 @@
 package main
 
 import (
-	"concurrency-simulator/services/core/handlers"
-	"concurrency-simulator/services/core/kafka_producer"
+	"concurrency-simulator/services/core/entrypoints"
+	"concurrency-simulator/services/core/external"
 	"concurrency-simulator/services/shared"
 	"net/http"
 	"os"
@@ -16,7 +16,7 @@ func main() {
 
 	logger.Info("Service is running on port", zap.String("service", strings.ToUpper(os.Getenv("SERVICE_NAME"))), zap.String("port", os.Getenv("HTTP_SERVER_PORT")))
 
-	kafkaProducer, err := kafka_producer.NewKafkaProducer()
+	kafkaProducer, err := external.NewKafkaProducer()
 
 	if err != nil {
 		logger.Error("Error creating producer", zap.Error(err))
@@ -25,9 +25,8 @@ func main() {
 
 	defer kafkaProducer.Close()
 
-	http.HandleFunc("/payment", func(w http.ResponseWriter, r *http.Request) {
-		handlers.PaymentHandler(w, r, kafkaProducer)
-	})
+	entrypoints.PaymentsEntrypoints(kafkaProducer)
+	entrypoints.AccountsEntrypoint(kafkaProducer)
 
 	err = http.ListenAndServe(":"+os.Getenv("HTTP_SERVER_PORT"), nil)
 

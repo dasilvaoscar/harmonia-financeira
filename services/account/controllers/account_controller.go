@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"concurrency-simulator/services/account/contracts"
 	"concurrency-simulator/services/account/internal/core/services"
-	"concurrency-simulator/services/shared/topic_messages"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"go.uber.org/zap"
@@ -19,7 +19,7 @@ type AccountController struct {
 func (pc *AccountController) ProcessMessage(msg *kafka.Message) {
 	pc.logger.Info("Received message from topic", zap.String("topic", *msg.TopicPartition.Topic), zap.String("message", string(msg.Value)))
 
-	var accountMessage topic_messages.Payment
+	var accountMessage contracts.AccountContract
 	if err := json.Unmarshal(msg.Value, &accountMessage); err != nil {
 		return
 	}

@@ -27,11 +27,10 @@ func execution(wg *sync.WaitGroup, logger *zap.Logger) {
 	consumer := createConsumer(logger)
 
 	controller := controllers.NewAccountController()
-	
-	assingPartitions(consumer, logger)
+
 	subscribeToTopic(consumer, logger)
 
-	logger.Error("Consumer started, listening to topic", zap.String("topic", shared.PaymentTopic))
+	logger.Error("Consumer started, listening to topic", zap.String("topic", shared.AccountTopic))
 
 	defer consumer.Close()
 
@@ -47,7 +46,6 @@ func execution(wg *sync.WaitGroup, logger *zap.Logger) {
 	}
 }
 
-
 func createConsumer(logger *zap.Logger) *kafka.Consumer {
 	consumer, err := kafka.NewConsumer(utils.GetKafkaConfig())
 
@@ -60,25 +58,10 @@ func createConsumer(logger *zap.Logger) *kafka.Consumer {
 }
 
 func subscribeToTopic(consumer *kafka.Consumer, logger *zap.Logger) {
-	err := consumer.SubscribeTopics([]string{shared.PaymentTopic}, nil)
+	err := consumer.SubscribeTopics([]string{shared.AccountTopic}, nil)
 
 	if err != nil {
 		logger.Error("Failed to subscribe to topics", zap.Error(err))
-		panic(err)
-	}
-}
-
-func assingPartitions(consumer *kafka.Consumer, logger *zap.Logger) {
-	topic := shared.PaymentTopic
-	err := consumer.Assign([]kafka.TopicPartition{
-		{
-			Topic:     &topic,
-			Partition: shared.PartitionAlias["starting"],
-		},
-	})
-
-	if err != nil {
-		logger.Error("Failed to assign partitions", zap.Error(err))
 		panic(err)
 	}
 }
