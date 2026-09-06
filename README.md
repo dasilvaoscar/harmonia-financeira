@@ -29,7 +29,7 @@ flowchart TB
 ```
 
 ## Arquitetura
-<img width="1330" height="3186" alt="image" src="https://github.com/user-attachments/assets/07c12b8d-8c53-4dfb-bbd0-a1a9a128dbcc" />
+<img width="1292" height="2818" alt="image" src="https://github.com/user-attachments/assets/8ae255be-b1b3-418a-8c6b-ced490168c04" />
 
 
 ## Ambientes Docker
