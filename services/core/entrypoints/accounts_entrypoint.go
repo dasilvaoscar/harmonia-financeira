@@ -9,7 +9,8 @@ import (
 )
 
 func AccountsEntrypoint(kafkaProducer *kafka.Producer) {
+	ctrl := controllers.NewAccountsController(kafkaProducer)
 	http.HandleFunc("/accounts", func(w http.ResponseWriter, r *http.Request) {
-		controllers.AccountsController(w, r, kafkaProducer)
+		ctrl.Execute(w, r)
 	})
 }

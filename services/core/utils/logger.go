@@ -11,7 +11,7 @@ func NewRequestLogger(r *http.Request) *zap.Logger {
 	var loggerInstance = shared.NewLogger("core-svc")
 
 	logger := loggerInstance.With(
-		zap.String("endpoint", "/payment"),
+		zap.String("endpoint", r.URL.Path),
 		zap.String("method", r.Method),
 		zap.String("user_agent", r.UserAgent()),
 	)
