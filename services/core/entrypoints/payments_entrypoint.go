@@ -9,7 +9,8 @@ import (
 )
 
 func PaymentsEntrypoints(kafkaProducer *kafka.Producer) {
+	ctrl := controllers.NewPaymentsController(kafkaProducer)
 	http.HandleFunc("/payments", func(w http.ResponseWriter, r *http.Request) {
-		controllers.PaymentsController(w, r, kafkaProducer)
+		ctrl.Execute(w, r)
 	})
 }

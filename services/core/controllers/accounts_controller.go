@@ -11,7 +11,11 @@ import (
 	"go.uber.org/zap"
 )
 
-func AccountsController(w http.ResponseWriter, r *http.Request, kafkaProducer *kafka.Producer) {
+type AccountsController struct {
+	producer *kafka.Producer
+}
+
+func (ctrl *AccountsController) Execute(w http.ResponseWriter, r *http.Request) {
 	logger := utils.NewRequestLogger(r)
 
 	topic := shared.AccountTopic
@@ -65,7 +69,7 @@ func AccountsController(w http.ResponseWriter, r *http.Request, kafkaProducer *k
 	}
 
 	deliveryChan := make(chan kafka.Event)
-	kafkaProducer.Produce(message, deliveryChan)
+	ctrl.producer.Produce(message, deliveryChan)
 
 	go func() {
 		for e := range deliveryChan {
@@ -86,7 +90,7 @@ func AccountsController(w http.ResponseWriter, r *http.Request, kafkaProducer *k
 		}
 	}()
 
-	pendingMessages := kafkaProducer.Flush(1000)
+	pendingMessages := ctrl.producer.Flush(1000)
 	if pendingMessages > 0 {
 		logger.Warn("Messages still pending after flush",
 			zap.Int("pending_count", pendingMessages),
