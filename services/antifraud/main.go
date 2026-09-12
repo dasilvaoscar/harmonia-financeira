@@ -21,7 +21,7 @@ func execution(logger *zap.Logger) {
 	
 	subscribeToTopic(consumer, logger)
 
-	logger.Error("Consumer started, listening to topic", zap.String("topic", shared.PaymentTopic))
+	logger.Info("Consumer started, listening to topic", zap.String("topic", shared.PaymentTopic))
 
 	defer consumer.Close()
 
@@ -33,7 +33,13 @@ func execution(logger *zap.Logger) {
 			continue
 		}
 
-		controller.ProcessMessage(msg)
+		logger.Info("Received message from topic", zap.String("topic", *msg.TopicPartition.Topic), zap.String("message", string(msg.Value)))
+
+		if shared.GetKafkaHeader(*msg, "event_type") == "fraud-validation" {
+			controller.ProcessMessage(msg)
+		} else {
+			logger.Info("Message skiped")
+		}
 	}
 }
 
