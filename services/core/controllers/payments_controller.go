@@ -73,6 +73,9 @@ func (ctrl *PaymentsController) Execute(w http.ResponseWriter, r *http.Request) 
 			Partition: shared.PartitionAlias["starting"],
 		},
 		Value: jsonMessage,
+		Headers: []kafka.Header{
+			{Key: "event_type", Value: []byte("fraud-validation")},
+		},
 	}
 
 	deliveryChan := make(chan kafka.Event)

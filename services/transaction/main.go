@@ -12,7 +12,7 @@ func main() {
 	logger := utils.NewRequestLogger()
 	consumer := createConsumer(logger)
 
-	assingPartitions(consumer, logger)
+	subscribeToTopic(consumer, logger)
 
 	for {
 		msg, err := consumer.ReadMessage(-1)
@@ -22,7 +22,13 @@ func main() {
 			continue
 		}
 
-		logger.Info("Mensagem lida", zap.String("Value", string(msg.Value)))
+		logger.Info("Received message from topic", zap.String("topic", *msg.TopicPartition.Topic), zap.String("message", string(msg.Value)))
+
+		if shared.GetKafkaHeader(*msg, "event_type") == "execute-transaction" {
+
+		} else {
+			logger.Info("Message skiped")
+		}
 	}
 }
 
@@ -37,17 +43,11 @@ func createConsumer(logger *zap.Logger) *kafka.Consumer {
 	return consumer
 }
 
-func assingPartitions(consumer *kafka.Consumer, logger *zap.Logger) {
-	topic := shared.PaymentTopic
-	err := consumer.Assign([]kafka.TopicPartition{
-		{
-			Topic:     &topic,
-			Partition: shared.PartitionAlias["starting"],
-		},
-	})
+func subscribeToTopic(consumer *kafka.Consumer, logger *zap.Logger) {
+	err := consumer.SubscribeTopics([]string{shared.PaymentTopic}, nil)
 
 	if err != nil {
-		logger.Error("Failed to assign partitions", zap.Error(err))
+		logger.Error("Failed to subscribe to topics", zap.Error(err))
 		panic(err)
 	}
 }

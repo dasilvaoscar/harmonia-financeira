@@ -13,7 +13,7 @@ POST http://localhost:8082/payments
 Content-Type: application/json
 
 {
-  "account_id": "",
+  "account_id": "ef7aa5d3-8b4c-48ce-8406-6b6d6f29ce27",
   "installments": 10,
   "amount": 505.0
 }

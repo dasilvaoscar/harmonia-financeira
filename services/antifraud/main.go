@@ -4,7 +4,6 @@ import (
 	"concurrency-simulator/services/antifraud/controllers"
 	"concurrency-simulator/services/antifraud/utils"
 	"concurrency-simulator/services/shared"
-	"sync"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"go.uber.org/zap"
@@ -12,26 +11,17 @@ import (
 
 func main() {
 	logger := utils.NewRequestLogger()
-
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	go execution(&wg, logger)
-
-	wg.Wait()
+	execution(logger)
 }
 
-func execution(wg *sync.WaitGroup, logger *zap.Logger) {
-	defer wg.Done()
-
+func execution(logger *zap.Logger) {
 	consumer := createConsumer(logger)
 
 	controller := controllers.NewAntifraudController()
-
-	assingPartitions(consumer, logger)
+	
 	subscribeToTopic(consumer, logger)
 
-	logger.Error("Consumer started, listening to topic", zap.String("topic", shared.PaymentTopic))
+	logger.Info("Consumer started, listening to topic", zap.String("topic", shared.PaymentTopic))
 
 	defer consumer.Close()
 
@@ -43,7 +33,13 @@ func execution(wg *sync.WaitGroup, logger *zap.Logger) {
 			continue
 		}
 
-		controller.ProcessMessage(msg)
+		logger.Info("Received message from topic", zap.String("topic", *msg.TopicPartition.Topic), zap.String("message", string(msg.Value)))
+
+		if shared.GetKafkaHeader(*msg, "event_type") == "fraud-validation" {
+			controller.ProcessMessage(msg)
+		} else {
+			logger.Info("Message skiped")
+		}
 	}
 }
 
@@ -56,21 +52,6 @@ func createConsumer(logger *zap.Logger) *kafka.Consumer {
 	}
 
 	return consumer
-}
-
-func assingPartitions(consumer *kafka.Consumer, logger *zap.Logger) {
-	topic := shared.PaymentTopic
-	err := consumer.Assign([]kafka.TopicPartition{
-		{
-			Topic:     &topic,
-			Partition: shared.PartitionAlias["starting"],
-		},
-	})
-
-	if err != nil {
-		logger.Error("Failed to assign partitions", zap.Error(err))
-		panic(err)
-	}
 }
 
 func subscribeToTopic(consumer *kafka.Consumer, logger *zap.Logger) {
